@@ -35,8 +35,11 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
       const typeNextWord = () => {
         if (currentIndex < words.length) {
           setDisplayText(prev => {
-            const newText = prev + (currentIndex === 0 ? '' : ' ') + words[currentIndex];
-            currentIndex++;
+            // Add multiple words at once for faster typing
+            const wordsToAdd = Math.min(3, words.length - currentIndex);
+            const newWords = words.slice(currentIndex, currentIndex + wordsToAdd).join(' ');
+            const newText = prev + (currentIndex === 0 ? '' : ' ') + newWords;
+            currentIndex += wordsToAdd;
             return newText;
           });
           
@@ -52,7 +55,7 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
         }
       };
 
-      intervalRef.current = setInterval(typeNextWord, 50);
+      intervalRef.current = setInterval(typeNextWord, 30); // Reduced from 50ms to 30ms
 
       return () => {
         if (intervalRef.current) {
