@@ -14,6 +14,7 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
   const [displayText, setDisplayText] = useState('');
   const messageRef = useRef<HTMLDivElement>(null);
+  const intervalRef = useRef<NodeJS.Timeout>();
 
   const handleCopy = async () => {
     try {
@@ -33,19 +34,31 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
 
       const typeNextWord = () => {
         if (currentIndex < words.length) {
-          setDisplayText(prev => prev + (currentIndex === 0 ? '' : ' ') + words[currentIndex]);
-          currentIndex++;
+          setDisplayText(prev => {
+            const newText = prev + (currentIndex === 0 ? '' : ' ') + words[currentIndex];
+            currentIndex++;
+            return newText;
+          });
           
           // Scroll into view smoothly
           if (messageRef.current) {
             messageRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
           }
+        } else {
+          // Clear the interval when we're done typing
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+          }
         }
       };
 
-      const typingInterval = setInterval(typeNextWord, 50); // Adjust timing here (50ms)
+      intervalRef.current = setInterval(typeNextWord, 50);
 
-      return () => clearInterval(typingInterval);
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+      };
     } else {
       setDisplayText(message); // Show user messages immediately
     }
