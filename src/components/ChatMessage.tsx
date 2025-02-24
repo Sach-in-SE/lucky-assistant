@@ -76,8 +76,8 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
         className={cn(
           "flex flex-col gap-1 max-w-[70%] rounded-xl px-3 py-2 relative group",
           isAI
-            ? "bg-secondary/50 rounded-tl-none"
-            : "bg-[#E5DEFF] dark:bg-[#4B4499] text-foreground rounded-tr-none" // Changed this line
+            ? "bg-[#F0EEFF] dark:bg-[#2D2B4A] rounded-tl-none" // Changed this line for AI messages
+            : "bg-[#E5DEFF] dark:bg-[#4B4499] text-foreground rounded-tr-none"
         )}
       >
         <div className="flex items-center justify-between gap-2">
@@ -97,7 +97,7 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
             variant="ghost"
             className={cn(
               "h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity",
-              copied ? "text-green-500" : isAI ? "text-foreground" : "text-foreground"
+              copied ? "text-green-500" : "text-foreground"
             )}
             onClick={handleCopy}
           >
