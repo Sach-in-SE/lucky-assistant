@@ -5,18 +5,19 @@ import { Textarea } from "./ui/textarea";
 import { Send } from "lucide-react";
 import { FileUpload } from "./FileUpload";
 import { VoiceRecorder } from "./VoiceRecorder";
-import { useToast } from "./ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatInputProps {
-  onSubmit: (message: string, attachment?: {
+  onSubmit: (content: string, attachment?: {
     url: string;
     type: string;
     name: string;
     size: number;
   }) => void;
+  disabled?: boolean;
 }
 
-export function ChatInput({ onSubmit }: ChatInputProps) {
+export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [attachment, setAttachment] = useState<{
     url: string;
@@ -96,6 +97,7 @@ export function ChatInput({ onSubmit }: ChatInputProps) {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type a message..."
           className="min-h-[60px]"
+          disabled={disabled}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -103,7 +105,7 @@ export function ChatInput({ onSubmit }: ChatInputProps) {
             }
           }}
         />
-        <Button type="submit" size="icon">
+        <Button type="submit" size="icon" disabled={disabled}>
           <Send className="h-4 w-4" />
         </Button>
       </div>

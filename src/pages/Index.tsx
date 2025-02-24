@@ -267,7 +267,7 @@ const Index = () => {
                 <ChatHistory messages={messages} />
               </div>
               <div className="border-t">
-                <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+                <ChatInput onSubmit={handleSendMessage} disabled={isLoading} />
               </div>
             </div>
           )}
