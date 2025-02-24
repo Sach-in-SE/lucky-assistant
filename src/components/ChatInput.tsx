@@ -2,7 +2,7 @@
 import { useState, useRef, FormEvent } from "react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
-import { Send } from "lucide-react";
+import { Send, Paperclip, Mic, Square, Loader2 } from "lucide-react";
 import { FileUpload } from "./FileUpload";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
     name: string;
     size: number;
   } | null>(null);
+  const [isShowingUpload, setIsShowingUpload] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -39,6 +40,7 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
 
   const handleFileUpload = (url: string, name: string, type: string, size: number) => {
     setAttachment({ url, type, name, size });
+    setIsShowingUpload(false);
     toast({
       title: "File uploaded",
       description: `${name} has been attached to your message`,
@@ -83,14 +85,27 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
           </Button>
         </div>
       )}
+      {isShowingUpload && (
+        <div className="px-4">
+          <FileUpload onUpload={handleFileUpload} onError={handleError} />
+        </div>
+      )}
       <div className="flex gap-2">
-        <FileUpload onUpload={handleFileUpload} onError={handleError} />
-        <VoiceRecorder
-          onRecordingComplete={handleVoiceUpload}
-          onError={handleError}
-        />
-      </div>
-      <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsShowingUpload(!isShowingUpload)}
+            disabled={disabled}
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <VoiceRecorder
+            onRecordingComplete={handleVoiceUpload}
+            onError={handleError}
+          />
+        </div>
         <Textarea
           ref={textareaRef}
           value={message}

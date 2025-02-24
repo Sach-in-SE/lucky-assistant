@@ -70,28 +70,26 @@ export function VoiceRecorder({ onRecordingComplete, onError }: VoiceRecorderPro
   };
 
   return (
-    <div className="flex items-center gap-2">
-      {isUploading ? (
-        <Button variant="ghost" size="icon" disabled>
-          <Loader2 className="h-4 w-4 animate-spin" />
-        </Button>
-      ) : isRecording ? (
-        <Button
-          variant="destructive"
-          size="icon"
-          onClick={stopRecording}
-        >
-          <Square className="h-4 w-4" />
-        </Button>
-      ) : (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={startRecording}
-        >
-          <Mic className="h-4 w-4" />
-        </Button>
-      )}
-    </div>
+    isUploading ? (
+      <Button variant="ghost" size="icon" disabled>
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </Button>
+    ) : isRecording ? (
+      <Button
+        variant="destructive"
+        size="icon"
+        onClick={stopRecording}
+      >
+        <Square className="h-4 w-4" />
+      </Button>
+    ) : (
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={startRecording}
+      >
+        <Mic className="h-4 w-4" />
+      </Button>
+    )
   );
 }
