@@ -28,14 +28,13 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
 
   useEffect(() => {
     if (isAI) {
-      setDisplayText(''); // Reset text when new message arrives
+      setDisplayText('');
       const words = message.split(' ');
       let currentIndex = 0;
 
       const typeNextWord = () => {
         if (currentIndex < words.length) {
           setDisplayText(prev => {
-            // Add multiple words at once for faster typing
             const wordsToAdd = Math.min(3, words.length - currentIndex);
             const newWords = words.slice(currentIndex, currentIndex + wordsToAdd).join(' ');
             const newText = prev + (currentIndex === 0 ? '' : ' ') + newWords;
@@ -43,29 +42,25 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
             return newText;
           });
           
-          // Scroll into view smoothly
           if (messageRef.current) {
             messageRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
           }
         } else {
-          // Clear the interval when we're done typing
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
           }
         }
       };
 
-      // Start typing with a faster interval (20ms)
       intervalRef.current = setInterval(typeNextWord, 20);
 
-      // Cleanup function
       return () => {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
         }
       };
     } else {
-      setDisplayText(message); // Show user messages immediately
+      setDisplayText(message);
     }
   }, [message, isAI]);
 
@@ -82,7 +77,7 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
           "flex flex-col gap-1 max-w-[70%] rounded-xl px-3 py-2 relative group",
           isAI
             ? "bg-secondary/50 rounded-tl-none"
-            : "bg-primary text-primary-foreground rounded-tr-none"
+            : "bg-[#E5DEFF] dark:bg-[#4B4499] text-foreground rounded-tr-none" // Changed this line
         )}
       >
         <div className="flex items-center justify-between gap-2">
@@ -92,7 +87,7 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
             </span>
             <span className={cn(
               "text-[10px]",
-              isAI ? "text-muted-foreground" : "text-primary-foreground/80"
+              isAI ? "text-muted-foreground" : "text-foreground/80"
             )}>
               {timestamp}
             </span>
@@ -102,7 +97,7 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
             variant="ghost"
             className={cn(
               "h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity",
-              copied ? "text-green-500" : isAI ? "text-foreground" : "text-primary-foreground"
+              copied ? "text-green-500" : isAI ? "text-foreground" : "text-foreground"
             )}
             onClick={handleCopy}
           >
@@ -111,7 +106,7 @@ export function ChatMessage({ message, isAI, timestamp }: ChatMessageProps) {
         </div>
         <div className={cn(
           "prose max-w-none",
-          isAI ? "dark:prose-invert" : "dark:prose-invert prose-p:text-primary-foreground"
+          isAI ? "dark:prose-invert" : "prose-p:text-foreground"
         )}>
           <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">
             {displayText}
