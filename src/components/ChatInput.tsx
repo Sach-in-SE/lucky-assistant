@@ -47,16 +47,21 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
     });
   };
 
-  const handleVoiceUpload = (url: string, duration: number) => {
+  const handleVoiceUpload = (url: string, duration: number, transcript?: string) => {
     setAttachment({
       url,
       type: "audio/webm",
       name: `Voice message (${duration.toFixed(1)}s)`,
       size: 0,
     });
+    
+    if (transcript) {
+      setMessage(transcript);
+    }
+    
     toast({
       title: "Voice message recorded",
-      description: "Your voice message has been attached",
+      description: "Your voice message has been attached and transcribed",
     });
   };
 

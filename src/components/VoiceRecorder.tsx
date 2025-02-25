@@ -5,7 +5,7 @@ import { Mic, Square, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface VoiceRecorderProps {
-  onRecordingComplete: (url: string, duration: number) => void;
+  onRecordingComplete: (url: string, duration: number, transcript?: string) => void;
   onError: (error: string) => void;
 }
 
@@ -42,8 +42,18 @@ export function VoiceRecorder({ onRecordingComplete, onError }: VoiceRecorderPro
             .from('chat_attachments')
             .getPublicUrl(filename);
 
+          // Get transcript from Edge Function
+          const { data: transcriptionData, error: transcriptionError } = await supabase.functions
+            .invoke('transcribe-audio', {
+              body: { audioUrl: publicUrl }
+            });
+
+          if (transcriptionError) {
+            console.error('Transcription error:', transcriptionError);
+          }
+
           const duration = (Date.now() - startTime.current) / 1000;
-          onRecordingComplete(publicUrl, duration);
+          onRecordingComplete(publicUrl, duration, transcriptionData?.text);
         } catch (error) {
           onError('Error uploading recording');
           console.error('Error uploading recording:', error);
