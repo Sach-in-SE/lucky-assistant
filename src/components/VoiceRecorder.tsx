@@ -19,7 +19,9 @@ export function VoiceRecorder({ onRecordingComplete, onError }: VoiceRecorderPro
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder.current = new MediaRecorder(stream);
+      mediaRecorder.current = new MediaRecorder(stream, {
+        mimeType: 'audio/webm'
+      });
       chunks.current = [];
 
       mediaRecorder.current.ondataavailable = (e) => {
@@ -42,6 +44,8 @@ export function VoiceRecorder({ onRecordingComplete, onError }: VoiceRecorderPro
             .from('chat_attachments')
             .getPublicUrl(filename);
 
+          console.log('Audio uploaded, getting transcription...');
+
           // Get transcript from Edge Function
           const { data: transcriptionData, error: transcriptionError } = await supabase.functions
             .invoke('transcribe-audio', {
@@ -50,13 +54,16 @@ export function VoiceRecorder({ onRecordingComplete, onError }: VoiceRecorderPro
 
           if (transcriptionError) {
             console.error('Transcription error:', transcriptionError);
+            throw transcriptionError;
           }
+
+          console.log('Transcription completed:', transcriptionData);
 
           const duration = (Date.now() - startTime.current) / 1000;
           onRecordingComplete(publicUrl, duration, transcriptionData?.text);
         } catch (error) {
-          onError('Error uploading recording');
-          console.error('Error uploading recording:', error);
+          console.error('Error processing recording:', error);
+          onError('Error processing recording');
         } finally {
           setIsUploading(false);
         }
