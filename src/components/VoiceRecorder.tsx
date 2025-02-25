@@ -25,28 +25,44 @@ export function VoiceRecorder({ onRecordingComplete, onError }: VoiceRecorderPro
       chunks.current = [];
 
       mediaRecorder.current.ondataavailable = (e) => {
-        chunks.current.push(e.data);
+        if (e.data.size > 0) {
+          chunks.current.push(e.data);
+        }
       };
 
       mediaRecorder.current.onstop = async () => {
+        if (chunks.current.length === 0) {
+          onError('No audio data recorded');
+          return;
+        }
+
         const audioBlob = new Blob(chunks.current, { type: 'audio/webm' });
+        if (audioBlob.size === 0) {
+          onError('Recorded audio is empty');
+          return;
+        }
+
         setIsUploading(true);
 
         try {
           const filename = `recording-${Date.now()}.webm`;
+          console.log('Uploading audio file:', filename);
+
           const { error: uploadError, data } = await supabase.storage
             .from('chat_attachments')
             .upload(filename, audioBlob);
 
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
+            throw uploadError;
+          }
 
           const { data: { publicUrl } } = supabase.storage
             .from('chat_attachments')
             .getPublicUrl(filename);
 
-          console.log('Audio uploaded, getting transcription...');
+          console.log('Audio uploaded successfully, getting transcription...');
 
-          // Get transcript from Edge Function
           const { data: transcriptionData, error: transcriptionError } = await supabase.functions
             .invoke('transcribe-audio', {
               body: { audioUrl: publicUrl }
@@ -57,24 +73,27 @@ export function VoiceRecorder({ onRecordingComplete, onError }: VoiceRecorderPro
             throw transcriptionError;
           }
 
-          console.log('Transcription completed:', transcriptionData);
+          if (!transcriptionData?.text) {
+            console.warn('No transcription text received');
+          }
 
           const duration = (Date.now() - startTime.current) / 1000;
           onRecordingComplete(publicUrl, duration, transcriptionData?.text);
         } catch (error) {
           console.error('Error processing recording:', error);
-          onError('Error processing recording');
+          onError('Error processing recording. Please try again.');
         } finally {
           setIsUploading(false);
         }
       };
 
-      mediaRecorder.current.start();
+      // Start recording with 1-second time slices
+      mediaRecorder.current.start(1000);
       startTime.current = Date.now();
       setIsRecording(true);
     } catch (error) {
-      onError('Error accessing microphone');
       console.error('Error accessing microphone:', error);
+      onError('Error accessing microphone. Please ensure microphone permissions are granted.');
     }
   };
 

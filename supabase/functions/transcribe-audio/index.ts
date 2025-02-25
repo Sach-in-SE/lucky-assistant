@@ -7,36 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Process base64 in chunks to prevent memory issues
-function processBase64Chunks(base64String: string, chunkSize = 32768) {
-  const chunks: Uint8Array[] = [];
-  let position = 0;
-  
-  while (position < base64String.length) {
-    const chunk = base64String.slice(position, position + chunkSize);
-    const binaryChunk = atob(chunk);
-    const bytes = new Uint8Array(binaryChunk.length);
-    
-    for (let i = 0; i < binaryChunk.length; i++) {
-      bytes[i] = binaryChunk.charCodeAt(i);
-    }
-    
-    chunks.push(bytes);
-    position += chunkSize;
-  }
-
-  const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  return result;
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -45,18 +15,25 @@ serve(async (req) => {
 
   try {
     const { audioUrl } = await req.json();
+    console.log('Received audio URL:', audioUrl);
+
+    if (!audioUrl) {
+      throw new Error('No audio URL provided');
+    }
 
     // Download audio file from Supabase storage
+    console.log('Downloading audio file...');
     const audioResponse = await fetch(audioUrl);
-    const arrayBuffer = await audioResponse.arrayBuffer();
-    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-    // Process audio in chunks
-    const binaryAudio = processBase64Chunks(base64Audio);
     
+    if (!audioResponse.ok) {
+      throw new Error(`Failed to download audio file: ${audioResponse.statusText}`);
+    }
+
+    const audioBlob = await audioResponse.blob();
+    console.log('Audio file downloaded, size:', audioBlob.size);
+
     // Prepare form data for OpenAI
     const formData = new FormData();
-    const audioBlob = new Blob([binaryAudio], { type: 'audio/webm' });
     formData.append('file', audioBlob, 'audio.webm');
     formData.append('model', 'whisper-1');
 
@@ -78,7 +55,7 @@ serve(async (req) => {
     }
 
     const result = await openAIResponse.json();
-    console.log('Transcription result:', result);
+    console.log('Transcription completed successfully');
 
     return new Response(
       JSON.stringify({ text: result.text }),
