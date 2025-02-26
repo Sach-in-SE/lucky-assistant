@@ -16,7 +16,17 @@ serve(async (req) => {
   }
 
   try {
+    if (!GEMINI_API_KEY) {
+      throw new Error('Gemini API key is not configured')
+    }
+
     const { prompt } = await req.json()
+
+    if (!prompt || typeof prompt !== 'string') {
+      throw new Error('Invalid or missing prompt')
+    }
+
+    console.log('Sending request to Gemini API with prompt:', prompt)
 
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
@@ -32,7 +42,20 @@ serve(async (req) => {
       })
     })
 
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Gemini API error:', errorText)
+      throw new Error('Failed to get response from Gemini API')
+    }
+
     const data = await response.json()
+    console.log('Received response from Gemini API:', data)
+
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      console.error('Invalid response format:', data)
+      throw new Error('Invalid response format from Gemini API')
+    }
+
     const generatedText = data.candidates[0].content.parts[0].text
 
     return new Response(
@@ -40,12 +63,15 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error in chat-with-gemini function:', error)
     return new Response(
-      JSON.stringify({ error: 'Failed to generate response', details: error.message }),
+      JSON.stringify({ 
+        error: 'Failed to process request',
+        details: error.message 
+      }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
   }
