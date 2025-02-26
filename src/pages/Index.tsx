@@ -29,6 +29,8 @@ const Index = () => {
   });
 
   const handleSendMessage = async (content: string) => {
+    if (!content.trim()) return;
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
@@ -39,21 +41,32 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('chat-with-gemini', {
+      const response = await supabase.functions.invoke('chat-with-gemini', {
         body: { prompt: content }
       });
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to get AI response');
+      }
+
+      if (!response.data?.generatedText) {
+        throw new Error('No response received from AI');
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: data.generatedText,
+        content: response.data.generatedText,
         isAI: true,
         timestamp: new Date().toLocaleTimeString(),
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error calling Gemini API:', error);
+      toast({
+        title: "Error",
+        description: "I apologize, but I encountered an error. Please try again in a moment.",
+        variant: "destructive",
+      });
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "I apologize, but I encountered an error processing your request. Please try again.",
