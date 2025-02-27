@@ -17,22 +17,26 @@ serve(async (req) => {
 
   try {
     if (!GEMINI_API_KEY) {
+      console.error('Gemini API key is not configured')
       throw new Error('Gemini API key is not configured')
     }
 
     const { prompt } = await req.json()
 
     if (!prompt || typeof prompt !== 'string') {
+      console.error('Invalid or missing prompt')
       throw new Error('Invalid or missing prompt')
     }
 
     console.log('Sending request to Gemini API with prompt:', prompt)
 
-    const response = await fetch(`${GEMINI_API_URL}`, {
+    // Add API key as URL parameter (Google's recommended approach)
+    const url = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GEMINI_API_KEY}`
       },
       body: JSON.stringify({
         contents: [{
@@ -45,39 +49,21 @@ serve(async (req) => {
           topK: 40,
           topP: 0.95,
           maxOutputTokens: 2048,
-        },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
+        }
       })
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Gemini API error:', errorText)
-      throw new Error('Failed to get response from Gemini API')
+      const errorData = await response.text()
+      console.error('Gemini API error response:', errorData)
+      throw new Error(`Failed to get response from Gemini API: ${response.status} ${response.statusText}`)
     }
 
     const data = await response.json()
-    console.log('Received response from Gemini API:', data)
+    console.log('Received response from Gemini API')
 
     if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      console.error('Invalid response format:', data)
+      console.error('Invalid response format:', JSON.stringify(data))
       throw new Error('Invalid response format from Gemini API')
     }
 
