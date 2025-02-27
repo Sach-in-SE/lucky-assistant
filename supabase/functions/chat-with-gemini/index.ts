@@ -2,7 +2,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
+const GEMINI_MODEL = "gemini-pro"
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent`
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,9 +29,9 @@ serve(async (req) => {
       throw new Error('Invalid or missing prompt')
     }
 
-    console.log('Sending request to Gemini API with prompt:', prompt)
+    console.log(`Sending request to Gemini API (${GEMINI_MODEL}) with prompt:`, prompt)
     
-    // Add API key as URL parameter (Google's recommended approach)
+    // Add API key as URL parameter
     const url = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`
     
     const payload = {
@@ -45,11 +46,11 @@ serve(async (req) => {
       ],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 800,
       }
     };
     
-    console.log('Request payload:', JSON.stringify(payload));
+    console.log('Sending payload to Gemini API')
     
     const response = await fetch(url, {
       method: 'POST',
@@ -59,28 +60,35 @@ serve(async (req) => {
       body: JSON.stringify(payload)
     })
 
-    console.log('Response status:', response.status);
+    console.log('Gemini API response status:', response.status)
     
     if (!response.ok) {
-      const errorData = await response.text()
-      console.error('Gemini API error response:', errorData)
-      throw new Error(`Failed to get response from Gemini API: ${response.status} ${response.statusText}`)
+      let errorMessage = `Status: ${response.status} ${response.statusText}`
+      try {
+        const errorData = await response.text()
+        console.error('Gemini API error response:', errorData)
+        errorMessage += ` - Details: ${errorData}`
+      } catch (e) {
+        console.error('Could not read error response body:', e)
+      }
+      throw new Error(`Failed to get response from Gemini API: ${errorMessage}`)
     }
 
     const data = await response.json()
-    console.log('Received response from Gemini API:', JSON.stringify(data).substring(0, 300) + '...');
+    console.log('Received response from Gemini API')
 
     // Handle the response format from Gemini API
-    let generatedText = "";
+    let generatedText = ""
     
     if (data.candidates && data.candidates.length > 0 && 
         data.candidates[0].content && 
         data.candidates[0].content.parts && 
         data.candidates[0].content.parts.length > 0) {
-      generatedText = data.candidates[0].content.parts[0].text || "";
+      generatedText = data.candidates[0].content.parts[0].text || ""
+      console.log('Successfully extracted generated text')
     } else {
-      console.error('Unexpected response format:', JSON.stringify(data));
-      throw new Error('Unexpected response format from Gemini API');
+      console.error('Unexpected response format:', JSON.stringify(data).substring(0, 500))
+      throw new Error('Unexpected response format from Gemini API')
     }
 
     return new Response(
