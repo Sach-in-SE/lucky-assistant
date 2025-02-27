@@ -1,14 +1,18 @@
+
 import { useState } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ChatHistory, type Message } from "@/components/ChatHistory";
 import { ChatInput } from "@/components/ChatInput";
-import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Contact, Mail, Github, Instagram, MapPin, Phone, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+
+// Note: You'll need to replace this with your actual API key
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; 
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
 
 const Index = () => {
   const { toast } = useToast();
@@ -41,21 +45,50 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      const response = await supabase.functions.invoke('chat-with-gemini', {
-        body: { prompt: content }
+      // Direct API call to Gemini
+      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: content
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 800,
+          }
+        })
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to get AI response');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gemini API error:', errorText);
+        throw new Error(`API responded with status: ${response.status}`);
       }
 
-      if (!response.data?.generatedText) {
-        throw new Error('No response received from AI');
+      const data = await response.json();
+      
+      let generatedText = "";
+      if (data.candidates && data.candidates.length > 0 && 
+          data.candidates[0].content && 
+          data.candidates[0].content.parts && 
+          data.candidates[0].content.parts.length > 0) {
+        generatedText = data.candidates[0].content.parts[0].text || "";
+      } else {
+        throw new Error('Unexpected response format from Gemini API');
       }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: response.data.generatedText,
+        content: generatedText,
         isAI: true,
         timestamp: new Date().toLocaleTimeString(),
       };
