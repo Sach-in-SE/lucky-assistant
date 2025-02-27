@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro:generateContent"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,30 +29,38 @@ serve(async (req) => {
     }
 
     console.log('Sending request to Gemini API with prompt:', prompt)
-
+    
     // Add API key as URL parameter (Google's recommended approach)
     const url = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`
+    
+    const payload = {
+      contents: [
+        {
+          parts: [
+            {
+              text: prompt
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      }
+    };
+    
+    console.log('Request payload:', JSON.stringify(payload));
     
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
-        }
-      })
+      body: JSON.stringify(payload)
     })
 
+    console.log('Response status:', response.status);
+    
     if (!response.ok) {
       const errorData = await response.text()
       console.error('Gemini API error response:', errorData)
@@ -60,14 +68,20 @@ serve(async (req) => {
     }
 
     const data = await response.json()
-    console.log('Received response from Gemini API')
+    console.log('Received response from Gemini API:', JSON.stringify(data).substring(0, 300) + '...');
 
-    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      console.error('Invalid response format:', JSON.stringify(data))
-      throw new Error('Invalid response format from Gemini API')
+    // Handle the response format from Gemini API
+    let generatedText = "";
+    
+    if (data.candidates && data.candidates.length > 0 && 
+        data.candidates[0].content && 
+        data.candidates[0].content.parts && 
+        data.candidates[0].content.parts.length > 0) {
+      generatedText = data.candidates[0].content.parts[0].text || "";
+    } else {
+      console.error('Unexpected response format:', JSON.stringify(data));
+      throw new Error('Unexpected response format from Gemini API');
     }
-
-    const generatedText = data.candidates[0].content.parts[0].text
 
     return new Response(
       JSON.stringify({ generatedText }),
