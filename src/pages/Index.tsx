@@ -13,7 +13,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 // API key for Gemini
 const GEMINI_API_KEY = "AIzaSyB9iorVKvP5UQlD7G4uREkYFfLIlPzrklk"; 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
 const Index = () => {
   const { toast } = useToast();
@@ -46,6 +46,8 @@ const Index = () => {
     setIsLoading(true);
 
     try {
+      console.log("Sending request to Gemini API:", `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`);
+      
       // Direct API call to Gemini
       const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
         method: 'POST',
@@ -76,6 +78,7 @@ const Index = () => {
       }
 
       const data = await response.json();
+      console.log("Response from Gemini API:", data);
       
       let generatedText = "";
       if (data.candidates && data.candidates.length > 0 && 
