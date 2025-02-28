@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
-// Note: You'll need to replace this with your actual API key
+// Replace this with your actual Gemini API key when you have it
 const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
 
@@ -312,6 +313,7 @@ const Index = () => {
           )}
         </main>
       </div>
+      <Toaster />
     </ThemeProvider>
   );
 }
