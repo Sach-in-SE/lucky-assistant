@@ -11,8 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
-// Replace this with your actual Gemini API key when you have it
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; 
+// API key for Gemini
+const GEMINI_API_KEY = "AIzaSyB9iorVKvP5UQlD7G4uREkYFfLIlPzrklk"; 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
 
 const Index = () => {
