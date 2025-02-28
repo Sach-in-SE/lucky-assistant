@@ -13,7 +13,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 // API key for Gemini
 const GEMINI_API_KEY = "AIzaSyB9iorVKvP5UQlD7G4uREkYFfLIlPzrklk"; 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent";
 
 const Index = () => {
   const { toast } = useToast();
