@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
 // API key for Gemini
-const GEMINI_API_KEY = "AIzaSyB9iorVKvP5UQlD7G4uREkYFfLIlPzrklk"; 
+const GEMINI_API_KEY = "AIzaSyAHaZbSb8wYvAFynYnzLzX4PgwVHbRUom4"; 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
 const Index = () => {
