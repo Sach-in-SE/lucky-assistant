@@ -10,7 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { supabase } from "@/integrations/supabase/client";
+
+// API URL and key are now hardcoded in the component instead of being configurable via UI
+const API_URL = "https://api.together.xyz/v1/chat/completions";
+const API_KEY = "f2fb339571bd0265a79f19d7f7f9977e66189670add02b4ad80e1a0fbf2b2b28";
 
 const Index = () => {
   const { toast } = useToast();
@@ -43,24 +46,45 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      // Call the Supabase Edge Function
-      const { data, error } = await supabase.functions.invoke('chat', {
-        body: { message: content }
+      // Direct API call to Together.ai without going through Supabase
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "meta-llama/Llama-3-8b-chat-hf",
+          messages: [
+            { role: "system", content: "You are Lucky, a helpful and friendly AI assistant. Respond to users in a conversational, natural way. Keep responses concise but informative." },
+            ...messages.map(msg => ({
+              role: msg.isAI ? "assistant" : "user",
+              content: msg.content
+            })),
+            { role: "user", content }
+          ],
+          temperature: 0.7,
+          max_tokens: 800
+        })
       });
 
-      if (error) {
-        throw new Error(`Error calling chat function: ${error.message}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`API error: ${errorData.message || response.statusText}`);
       }
+
+      const data = await response.json();
+      const aiResponse = data.choices[0].message.content;
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: data.response,
+        content: aiResponse,
         isAI: true,
         timestamp: new Date().toLocaleTimeString(),
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
-      console.error(`Error calling Supabase function:`, error);
+      console.error(`Error calling API:`, error);
       toast({
         title: "Error",
         description: `I apologize, but I encountered an error processing your request. Please try again.`,

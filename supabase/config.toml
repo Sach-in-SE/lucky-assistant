@@ -1,6 +1,5 @@
 
 project_id = "olivjjihnabrgqagsbfa"
 
-[[functions]]
-name = "chat"
+[functions.chat]
 verify_jwt = false
