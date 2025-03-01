@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -14,6 +13,8 @@ import { Toaster } from "@/components/ui/toaster";
 // API keys
 const GEMINI_API_KEY = "AIzaSyAHaZbSb8wYvAFynYnzLzX4PgwVHbRUom4"; 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+const TOGETHER_API_KEY = "343084b5b60711aacaa2995ffd57bd11478a7d4970b7743c7174ac6972c05cb4";
+const TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions";
 
 // Create a state variable to store the user's Perplexity API key
 const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
@@ -35,7 +36,7 @@ const Index = () => {
     email: "",
     message: ""
   });
-  const [apiProvider, setApiProvider] = useState<"gemini" | "perplexity">("gemini");
+  const [apiProvider, setApiProvider] = useState<"gemini" | "perplexity" | "together">("together");
   const [perplexityApiKey, setPerplexityApiKey] = useState("");
   const [showApiSettings, setShowApiSettings] = useState(false);
 
@@ -63,6 +64,9 @@ const Index = () => {
           throw new Error("Perplexity API key is required");
         }
         generatedText = await callPerplexityApi(content);
+      } else if (apiProvider === "together") {
+        console.log("Using Together.ai API");
+        generatedText = await callTogetherApi(content);
       }
 
       const aiMessage: Message = {
@@ -94,7 +98,6 @@ const Index = () => {
   const callGeminiApi = async (content: string): Promise<string> => {
     console.log("Sending request to Gemini API:", `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`);
     
-    // Direct API call to Gemini
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
@@ -181,11 +184,52 @@ const Index = () => {
     const data = await response.json();
     console.log("Response from Perplexity API:", data);
     
-    // Extract the text from the Perplexity response
     if (data.choices && data.choices.length > 0 && data.choices[0].message) {
       return data.choices[0].message.content || "";
     } else {
       throw new Error('Unexpected response format from Perplexity API');
+    }
+  };
+
+  const callTogetherApi = async (content: string): Promise<string> => {
+    console.log("Sending request to Together.ai API");
+    
+    const response = await fetch(TOGETHER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${TOGETHER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful, friendly and knowledgeable assistant named Lucky. Be concise and helpful.'
+          },
+          {
+            role: 'user',
+            content: content
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Together.ai API error:', errorText);
+      throw new Error(`API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Response from Together.ai API:", data);
+    
+    if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+      return data.choices[0].message.content || "";
+    } else {
+      throw new Error('Unexpected response format from Together.ai API');
     }
   };
 
@@ -301,7 +345,7 @@ const Index = () => {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-slate-900 mb-1 block">Select API Provider</label>
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap gap-3">
                     <button
                       onClick={() => setApiProvider("gemini")}
                       className={`px-4 py-2 rounded-lg ${apiProvider === "gemini" 
@@ -317,6 +361,14 @@ const Index = () => {
                         : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                     >
                       Perplexity API
+                    </button>
+                    <button
+                      onClick={() => setApiProvider("together")}
+                      className={`px-4 py-2 rounded-lg ${apiProvider === "together" 
+                        ? "bg-blue-500 text-white" 
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                    >
+                      Together.ai API
                     </button>
                   </div>
                 </div>
