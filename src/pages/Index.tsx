@@ -14,7 +14,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 // API URL and key are now hardcoded in the component instead of being configurable via UI
 const API_URL = "https://api.together.xyz/v1/chat/completions";
-const API_KEY = "f2fb339571bd0265a79f19d7f7f9977e66189670add02b4ad80e1a0fbf2b2b28";
+const API_KEY = "tgp_v1_qgxCBe0k1wqAVamtAz6jvWTjEb7OURkx4wSE79XGicM";
 
 const Index = () => {
   const { toast } = useToast();
