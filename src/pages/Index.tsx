@@ -11,9 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
-// API key for Gemini
+// API keys
 const GEMINI_API_KEY = "AIzaSyAHaZbSb8wYvAFynYnzLzX4PgwVHbRUom4"; 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+
+// Create a state variable to store the user's Perplexity API key
+const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
 
 const Index = () => {
   const { toast } = useToast();
@@ -32,6 +35,9 @@ const Index = () => {
     email: "",
     message: ""
   });
+  const [apiProvider, setApiProvider] = useState<"gemini" | "perplexity">("gemini");
+  const [perplexityApiKey, setPerplexityApiKey] = useState("");
+  const [showApiSettings, setShowApiSettings] = useState(false);
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
@@ -46,48 +52,17 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      console.log("Sending request to Gemini API:", `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`);
-      
-      // Direct API call to Gemini
-      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: content
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 800,
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Gemini API error:', errorText);
-        throw new Error(`API responded with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Response from Gemini API:", data);
-      
       let generatedText = "";
-      if (data.candidates && data.candidates.length > 0 && 
-          data.candidates[0].content && 
-          data.candidates[0].content.parts && 
-          data.candidates[0].content.parts.length > 0) {
-        generatedText = data.candidates[0].content.parts[0].text || "";
-      } else {
-        throw new Error('Unexpected response format from Gemini API');
+
+      if (apiProvider === "gemini") {
+        console.log("Using Gemini API");
+        generatedText = await callGeminiApi(content);
+      } else if (apiProvider === "perplexity") {
+        console.log("Using Perplexity API");
+        if (!perplexityApiKey) {
+          throw new Error("Perplexity API key is required");
+        }
+        generatedText = await callPerplexityApi(content);
       }
 
       const aiMessage: Message = {
@@ -98,21 +73,119 @@ const Index = () => {
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
-      console.error('Error calling Gemini API:', error);
+      console.error(`Error calling ${apiProvider} API:`, error);
       toast({
         title: "Error",
-        description: "I apologize, but I encountered an error. Please try again in a moment.",
+        description: `I apologize, but I encountered an error with the ${apiProvider} API. Please try again or switch APIs.`,
         variant: "destructive",
       });
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I apologize, but I encountered an error processing your request. Please try again.",
+        content: `I apologize, but I encountered an error processing your request with the ${apiProvider} API. Please try again or try switching the API provider in settings.`,
         isAI: true,
         timestamp: new Date().toLocaleTimeString(),
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const callGeminiApi = async (content: string): Promise<string> => {
+    console.log("Sending request to Gemini API:", `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`);
+    
+    // Direct API call to Gemini
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: content
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 800,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error:', errorText);
+      throw new Error(`API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Response from Gemini API:", data);
+    
+    let generatedText = "";
+    if (data.candidates && data.candidates.length > 0 && 
+        data.candidates[0].content && 
+        data.candidates[0].content.parts && 
+        data.candidates[0].content.parts.length > 0) {
+      generatedText = data.candidates[0].content.parts[0].text || "";
+    } else {
+      throw new Error('Unexpected response format from Gemini API');
+    }
+
+    return generatedText;
+  };
+
+  const callPerplexityApi = async (content: string): Promise<string> => {
+    console.log("Sending request to Perplexity API");
+    
+    const response = await fetch(PERPLEXITY_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: 'Be precise and concise.'
+          },
+          {
+            role: 'user',
+            content: content
+          }
+        ],
+        temperature: 0.2,
+        top_p: 0.9,
+        max_tokens: 1000,
+        return_images: false,
+        return_related_questions: false,
+        search_domain_filter: ['perplexity.ai'],
+        search_recency_filter: 'month',
+        frequency_penalty: 1,
+        presence_penalty: 0
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Perplexity API error:', errorText);
+      throw new Error(`API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Response from Perplexity API:", data);
+    
+    // Extract the text from the Perplexity response
+    if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+      return data.choices[0].message.content || "";
+    } else {
+      throw new Error('Unexpected response format from Perplexity API');
     }
   };
 
@@ -187,6 +260,18 @@ const Index = () => {
                 </button>
               </div>
               <div className="flex items-center gap-4">
+                {!showContact && (
+                  <button
+                    onClick={() => setShowApiSettings(!showApiSettings)}
+                    className="flex items-center gap-2 font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    API Settings
+                  </button>
+                )}
                 {showContact && (
                   <button
                     onClick={() => setShowContact(false)}
@@ -210,6 +295,60 @@ const Index = () => {
         </header>
 
         <main className="flex-1 overflow-y-auto container max-w-4xl mx-auto p-4">
+          {showApiSettings && !showContact && (
+            <div className="glass rounded-2xl modern-shadow mb-4 p-6">
+              <h2 className="text-xl font-semibold mb-4">API Settings</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-900 mb-1 block">Select API Provider</label>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setApiProvider("gemini")}
+                      className={`px-4 py-2 rounded-lg ${apiProvider === "gemini" 
+                        ? "bg-blue-500 text-white" 
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                    >
+                      Gemini API
+                    </button>
+                    <button
+                      onClick={() => setApiProvider("perplexity")}
+                      className={`px-4 py-2 rounded-lg ${apiProvider === "perplexity" 
+                        ? "bg-blue-500 text-white" 
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                    >
+                      Perplexity API
+                    </button>
+                  </div>
+                </div>
+                
+                {apiProvider === "perplexity" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-900">Perplexity API Key</label>
+                    <Input
+                      type="password"
+                      value={perplexityApiKey}
+                      onChange={(e) => setPerplexityApiKey(e.target.value)}
+                      placeholder="Enter your Perplexity API key"
+                      className="gradient-border focus:ring-2 focus:ring-blue-500/20"
+                    />
+                    <p className="text-xs text-slate-500">
+                      You can get your API key from the <a href="https://www.perplexity.ai/settings/api" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Perplexity API dashboard</a>
+                    </p>
+                  </div>
+                )}
+
+                <div className="pt-2">
+                  <Button 
+                    onClick={() => setShowApiSettings(false)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    Save Settings
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        
           {showContact ? (
             <div className="glass rounded-2xl modern-shadow">
               <div className="grid md:grid-cols-2 gap-8 p-8">
