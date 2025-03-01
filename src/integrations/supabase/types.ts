@@ -9,36 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      attachments: {
-        Row: {
-          created_at: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          file_type: string
-          id: string
-          message_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          file_type: string
-          id?: string
-          message_id: string
-        }
-        Update: {
-          created_at?: string | null
-          file_name?: string
-          file_path?: string
-          file_size?: number
-          file_type?: string
-          id?: string
-          message_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
