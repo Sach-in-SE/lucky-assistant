@@ -71,13 +71,25 @@
  
   .bg-grid {
     background-size: 32px 32px;
-    background-image: linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
-                     linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+    background-image: linear-gradient(to right, rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+                     linear-gradient(to bottom, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
   }
 
   .dark .bg-grid {
     background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
                      linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+  }
+
+  /* Add subtle dot pattern for light mode background */
+  .dot-pattern {
+    background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Add soft light effect */
+  .light-effect {
+    background-image: radial-gradient(circle at 30% 20%, rgba(191, 219, 254, 0.4) 0%, transparent 50%),
+                      radial-gradient(circle at 70% 65%, rgba(147, 197, 253, 0.3) 0%, transparent 45%);
   }
 }
 
