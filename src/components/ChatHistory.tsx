@@ -24,7 +24,7 @@ export function ChatHistory({ messages }: ChatHistoryProps) {
   }, [messages]);
 
   return (
-    <div ref={scrollRef} className="flex-1 h-full overflow-auto scroll-smooth">
+    <div ref={scrollRef} className="flex-1 h-full overflow-auto scroll-smooth chat-container">
       <div className="flex flex-col">
         {messages.map((message) => (
           <ChatMessage

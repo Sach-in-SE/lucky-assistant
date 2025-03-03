@@ -101,6 +101,36 @@
     background-size: 50px 50px, 50px 50px, 100px 100px;
     background-position: 0 0, 0 0, 25px 25px;
   }
+
+  /* Add conversation background with AI image */
+  .chat-container {
+    position: relative;
+  }
+  
+  .chat-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("/lovable-uploads/1e65db89-d96f-468b-a2e1-c374a710a677.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.8;
+    z-index: -1;
+  }
+  
+  .dark .chat-container::before {
+    opacity: 0.4;
+    mix-blend-mode: color-dodge;
+  }
+  
+  .light .chat-container::before {
+    opacity: 0.5;
+    mix-blend-mode: soft-light;
+  }
 }
 
 @layer utilities {

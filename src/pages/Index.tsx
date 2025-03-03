@@ -12,13 +12,7 @@ const Background = () => {
   const { theme } = useTheme();
   
   return (
-    <div 
-      className="absolute inset-0 bg-cover bg-center bg-no-repeat -z-10"
-      style={{ 
-        backgroundImage: 'url("/lovable-uploads/1e65db89-d96f-468b-a2e1-c374a710a677.png")',
-        backgroundBlendMode: theme === "light" ? "soft-light" : "color-dodge",
-      }}
-    >
+    <div className="absolute inset-0 -z-10">
       {theme === "light" ? (
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-50/40 to-white/60 backdrop-blur-[1px]" />
