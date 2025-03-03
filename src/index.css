@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -117,6 +118,7 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    opacity: 0.6;
     z-index: -1;
   }
   
@@ -126,8 +128,8 @@
   }
   
   .light .chat-container::before {
-    opacity: 0.3;
-    mix-blend-mode: overlay;
+    opacity: 0.6;
+    mix-blend-mode: multiply;
   }
 }
 
