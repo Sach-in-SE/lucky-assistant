@@ -5,29 +5,6 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
-    --radius: 1rem;
-  }
- 
-  .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
     --card: 222 47% 11%;
@@ -47,6 +24,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+    --radius: 1rem;
   }
  
   * {
@@ -58,7 +36,7 @@
   }
  
   .glass {
-    @apply bg-white/90 backdrop-blur-lg border border-white/20 shadow-lg dark:bg-slate-900/90 dark:border-white/10;
+    @apply bg-slate-900/90 backdrop-blur-lg border border-white/10 shadow-lg;
   }
  
   .message-transition {
@@ -66,32 +44,15 @@
   }
 
   .modern-card {
-    @apply rounded-2xl bg-gradient-to-br from-white to-slate-50/80 dark:from-slate-800 dark:to-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300;
+    @apply rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900/80 backdrop-blur-xl border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300;
   }
  
   .bg-grid {
     background-size: 32px 32px;
-    background-image: linear-gradient(to right, rgba(59, 130, 246, 0.05) 1px, transparent 1px),
-                     linear-gradient(to bottom, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
-  }
-
-  .dark .bg-grid {
     background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
                      linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
   }
 
-  /* Add subtle dot pattern for light mode background */
-  .dot-pattern {
-    background-image: radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
-  }
-
-  /* Add soft light effect */
-  .light-effect {
-    background-image: radial-gradient(circle at 30% 20%, rgba(191, 219, 254, 0.4) 0%, transparent 50%),
-                      radial-gradient(circle at 70% 65%, rgba(147, 197, 253, 0.3) 0%, transparent 45%);
-  }
-  
   /* Add circuit pattern for dark mode */
   .bg-circuit-pattern {
     background-image: 
@@ -118,18 +79,9 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    opacity: 0.6;
-    z-index: -1;
-  }
-  
-  .dark .chat-container::before {
     opacity: 0.4;
+    z-index: -1;
     mix-blend-mode: color-dodge;
-  }
-  
-  .light .chat-container::before {
-    opacity: 0.6;
-    mix-blend-mode: multiply;
   }
 }
 
@@ -147,18 +99,18 @@
   }
 
   .modern-shadow {
-    @apply shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)];
+    @apply shadow-[0_8px_30px_rgb(0,0,0,0.2)];
   }
 
   .gradient-border {
-    @apply border border-slate-200/60 dark:border-slate-700/60;
+    @apply border border-slate-700/60;
   }
 
   .glass-input {
-    @apply bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-white/20 dark:border-white/10 focus:border-blue-500/50 dark:focus:border-blue-400/50 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 transition-all duration-300;
+    @apply bg-slate-800/50 backdrop-blur-md border border-white/10 focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300;
   }
 
   .neo-brutalism {
-    @apply border-2 border-slate-900 dark:border-slate-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] transition-all;
+    @apply border-2 border-slate-100 shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] transition-all;
   }
 }

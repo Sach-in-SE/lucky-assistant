@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Contact, Home, Sparkles } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface HeaderProps {
   showContact: boolean;
@@ -10,7 +9,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ showContact, setShowContact }) => {
   return (
-    <header className="relative border-b border-slate-200/70 dark:border-slate-700/70 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
+    <header className="relative border-b border-slate-700/70 bg-slate-900/60 backdrop-blur-md supports-[backdrop-filter]:bg-slate-900/60">
       <div className="container max-w-7xl mx-auto">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
@@ -28,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ showContact, setShowContact }) => {
             {showContact ? (
               <button
                 onClick={() => setShowContact(false)}
-                className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="flex items-center gap-2 font-medium text-slate-300 hover:text-white transition-colors"
               >
                 <Home className="h-4 w-4" />
                 Home
@@ -36,13 +35,12 @@ const Header: React.FC<HeaderProps> = ({ showContact, setShowContact }) => {
             ) : (
               <button
                 onClick={() => setShowContact(true)}
-                className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="flex items-center gap-2 font-medium text-slate-300 hover:text-white transition-colors"
               >
                 <Contact className="h-4 w-4" />
                 Contact Us
               </button>
             )}
-            <ThemeToggle />
           </div>
         </div>
       </div>
