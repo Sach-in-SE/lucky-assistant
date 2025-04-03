@@ -20,16 +20,26 @@ const Background = () => {
 
 const Index = () => {
   const [showContact, setShowContact] = useState(false);
+  const [chatKey, setChatKey] = useState(Date.now());
+
+  const handleNewChat = () => {
+    // Reset the chat by changing the key
+    setChatKey(Date.now());
+  };
 
   return (
     <ThemeProvider>
       <div className="flex flex-col h-screen">
         <Background />
         
-        <Header showContact={showContact} setShowContact={setShowContact} />
+        <Header 
+          showContact={showContact} 
+          setShowContact={setShowContact}
+          onNewChat={handleNewChat}
+        />
 
         <main className="flex-1 overflow-y-auto container max-w-4xl mx-auto p-4 chat-container">
-          {showContact ? <ContactPage /> : <ChatPage />}
+          {showContact ? <ContactPage /> : <ChatPage key={chatKey} />}
         </main>
       </div>
       <Toaster />

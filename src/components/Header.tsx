@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Contact, Home, LogIn, LogOut, Sparkles, User } from "lucide-react";
+import { Contact, Home, LogIn, LogOut, MessageSquarePlus, Sparkles, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -8,15 +8,22 @@ import { Button } from "@/components/ui/button";
 interface HeaderProps {
   showContact: boolean;
   setShowContact: (show: boolean) => void;
+  onNewChat?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ showContact, setShowContact }) => {
+const Header: React.FC<HeaderProps> = ({ showContact, setShowContact, onNewChat }) => {
   const { currentUser, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/signin');
+  };
+
+  const handleNewChat = () => {
+    if (onNewChat) {
+      onNewChat();
+    }
   };
 
   return (
@@ -35,6 +42,16 @@ const Header: React.FC<HeaderProps> = ({ showContact, setShowContact }) => {
             </Link>
           </div>
           <div className="flex items-center gap-4">
+            {!showContact && (
+              <button
+                onClick={handleNewChat}
+                className="flex items-center gap-2 font-medium text-slate-300 hover:text-white transition-colors"
+              >
+                <MessageSquarePlus className="h-4 w-4" />
+                New Chat
+              </button>
+            )}
+            
             {showContact ? (
               <button
                 onClick={() => setShowContact(false)}

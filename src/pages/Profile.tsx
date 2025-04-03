@@ -1,21 +1,17 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useAuth, UserData } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, LoaderCircle, LogOut } from 'lucide-react';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
+import { LogOut } from 'lucide-react';
 
 const Profile = () => {
   const { userData, updateUserProfile, signOut } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<Partial<UserData>>({
     displayName: userData?.displayName || '',
@@ -44,40 +40,6 @@ const Profile = () => {
         description: 'Failed to update profile',
         variant: 'destructive',
       });
-    }
-  };
-  
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0]) return;
-    
-    const file = e.target.files[0];
-    setIsUploading(true);
-    
-    try {
-      // Create storage reference
-      const storageRef = ref(storage, `profile_images/${userData?.uid}/${Date.now()}_${file.name}`);
-      
-      // Upload file
-      await uploadBytes(storageRef, file);
-      
-      // Get download URL
-      const downloadURL = await getDownloadURL(storageRef);
-      
-      // Update user profile
-      await updateUserProfile({ photoURL: downloadURL });
-      
-      toast({
-        title: 'Success',
-        description: 'Profile picture updated successfully',
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to upload profile picture',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUploading(false);
     }
   };
   
@@ -125,26 +87,6 @@ const Profile = () => {
                   </div>
                 )}
               </div>
-              
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-              />
-              
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 shadow-lg"
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <LoaderCircle className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Camera className="h-5 w-5" />
-                )}
-              </button>
             </div>
             
             <p className="text-lg font-medium text-center">

@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCBTcdwhmAVfDg3pwnxQZWGEq_Um7R4d5c",
   authDomain: "lucky-ai-assistant.firebaseapp.com",
   projectId: "lucky-ai-assistant",
-  storageBucket: "lucky-ai-assistant.appspot.com", // Fixed storage bucket URL
+  storageBucket: "lucky-ai-assistant.appspot.com", 
   messagingSenderId: "881172786466",
   appId: "1:881172786466:web:0126fb496b307b630dc97b",
   measurementId: "G-4EB0SR37LX"
