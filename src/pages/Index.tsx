@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import Header from "@/components/Header";
 import ChatPage from "@/components/ChatPage";
 import ContactPage from "@/components/ContactPage";
+import { useLocation } from "react-router-dom";
 
 // Create a dark-only Background component
 const Background = () => {
@@ -19,8 +20,16 @@ const Background = () => {
 };
 
 const Index = () => {
+  const location = useLocation();
   const [showContact, setShowContact] = useState(false);
   const [chatKey, setChatKey] = useState(Date.now());
+
+  // Check for state from navigation 
+  useEffect(() => {
+    if (location.state?.showContact) {
+      setShowContact(true);
+    }
+  }, [location.state]);
 
   const handleNewChat = () => {
     // Reset the chat by changing the key

@@ -7,6 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import ChatSuggestions from "@/components/ChatSuggestions";
 
 // API URL and key configuration
 const TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions";
@@ -15,6 +16,13 @@ const TOGETHER_API_KEY = "tgp_v1_qgxCBe0k1wqAVamtAz6jvWTjEb7OURkx4wSE79XGicM";
 // Hugging Face API configuration
 const HF_API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3-8b-chat-hf";
 const HF_API_KEY = "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";
+
+// Chat suggestions
+const CHAT_SUGGESTIONS = [
+  "What can you help me with?",
+  "Tell me about yourself",
+  "How does AI work?"
+];
 
 interface ChatPageProps {
   initialMessages?: Message[];
@@ -36,6 +44,7 @@ const ChatPage: React.FC<ChatPageProps> = ({
   const [apiKeyError, setApiKeyError] = useState(false);
   const [customApiKey, setCustomApiKey] = useState("");
   const [useHuggingFace, setUseHuggingFace] = useState(true); // Default to using Hugging Face
+  const [showSuggestions, setShowSuggestions] = useState(true);
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
@@ -48,6 +57,7 @@ const ChatPage: React.FC<ChatPageProps> = ({
     };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
+    setShowSuggestions(false); // Hide suggestions once user sends a message
 
     try {
       let aiResponse;
@@ -72,13 +82,8 @@ const ChatPage: React.FC<ChatPageProps> = ({
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       console.error(`Error calling API:`, error);
-      toast({
-        title: "Error",
-        description: `${error instanceof Error ? error.message : "An error occurred. Please try again."}`,
-        variant: "destructive",
-      });
       
-      // If error is due to Hugging Face API, try Together.ai as fallback
+      // Silently try fallback without notifying the user
       if (useHuggingFace) {
         try {
           setUseHuggingFace(false);
@@ -92,16 +97,12 @@ const ChatPage: React.FC<ChatPageProps> = ({
           };
           setMessages((prev) => [...prev, fallbackMessage]);
           
-          toast({
-            title: "Switched to Fallback API",
-            description: "Hugging Face API encountered an issue. Using Together.ai as fallback.",
-          });
+          // No toast for API switch - silent fallback
         } catch (fallbackError) {
+          console.error("Fallback API also failed:", fallbackError);
           const errorMessage: Message = {
             id: (Date.now() + 1).toString(),
-            content: fallbackError instanceof Error 
-              ? fallbackError.message 
-              : "I apologize, but I encountered an error processing your request. Please try again later.",
+            content: "I apologize, but I'm having trouble connecting right now. Please try again in a moment.",
             isAI: true,
             timestamp: new Date().toLocaleTimeString(),
           };
@@ -110,9 +111,7 @@ const ChatPage: React.FC<ChatPageProps> = ({
       } else {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: error instanceof Error 
-            ? error.message 
-            : "I apologize, but I encountered an error processing your request. Please try again later.",
+          content: "I apologize, but I'm having trouble connecting right now. Please try again in a moment.",
           isAI: true,
           timestamp: new Date().toLocaleTimeString(),
         };
@@ -121,6 +120,11 @@ const ChatPage: React.FC<ChatPageProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    handleSendMessage(suggestion);
+    setShowSuggestions(false);
   };
 
   const callHuggingFaceAPI = async (content: string, prevMessages: Message[]): Promise<string> => {
@@ -252,6 +256,12 @@ const ChatPage: React.FC<ChatPageProps> = ({
         <ChatHistory messages={messages} />
       </div>
       <div className="border-t border-slate-200/60 dark:border-slate-700/60">
+        {showSuggestions && (
+          <ChatSuggestions 
+            suggestions={CHAT_SUGGESTIONS} 
+            onSuggestionClick={handleSuggestionClick} 
+          />
+        )}
         <ChatInput onSubmit={handleSendMessage} disabled={isLoading} />
       </div>
     </div>

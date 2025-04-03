@@ -6,8 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
-  showContact: boolean;
-  setShowContact: (show: boolean) => void;
+  showContact?: boolean;
+  setShowContact?: (show: boolean) => void;
   onNewChat?: () => void;
 }
 
@@ -23,6 +23,26 @@ const Header: React.FC<HeaderProps> = ({ showContact, setShowContact, onNewChat 
   const handleNewChat = () => {
     if (onNewChat) {
       onNewChat();
+    } else {
+      // If we're on profile page, navigate to home and reset chat
+      navigate('/');
+    }
+  };
+
+  const handleContactToggle = () => {
+    if (setShowContact) {
+      setShowContact(!showContact);
+    } else {
+      // If we're on profile page, navigate to home and show contact
+      navigate('/', { state: { showContact: true } });
+    }
+  };
+
+  const handleHomeClick = () => {
+    if (setShowContact && showContact) {
+      setShowContact(false);
+    } else {
+      navigate('/');
     }
   };
 
@@ -42,19 +62,17 @@ const Header: React.FC<HeaderProps> = ({ showContact, setShowContact, onNewChat 
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            {!showContact && (
-              <button
-                onClick={handleNewChat}
-                className="flex items-center gap-2 font-medium text-slate-300 hover:text-white transition-colors"
-              >
-                <MessageSquarePlus className="h-4 w-4" />
-                New Chat
-              </button>
-            )}
+            <button
+              onClick={handleNewChat}
+              className="flex items-center gap-2 font-medium text-slate-300 hover:text-white transition-colors"
+            >
+              <MessageSquarePlus className="h-4 w-4" />
+              New Chat
+            </button>
             
             {showContact ? (
               <button
-                onClick={() => setShowContact(false)}
+                onClick={handleHomeClick}
                 className="flex items-center gap-2 font-medium text-slate-300 hover:text-white transition-colors"
               >
                 <Home className="h-4 w-4" />
@@ -62,7 +80,7 @@ const Header: React.FC<HeaderProps> = ({ showContact, setShowContact, onNewChat 
               </button>
             ) : (
               <button
-                onClick={() => setShowContact(true)}
+                onClick={handleContactToggle}
                 className="flex items-center gap-2 font-medium text-slate-300 hover:text-white transition-colors"
               >
                 <Contact className="h-4 w-4" />
