@@ -8,9 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-// API URL and key are now hardcoded in the component instead of being configurable via UI
-const API_URL = "https://api.together.xyz/v1/chat/completions";
-const API_KEY = "tgp_v1_qgxCBe0k1wqAVamtAz6jvWTjEb7OURkx4wSE79XGicM";
+// API URL and key configuration
+const TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions";
+const TOGETHER_API_KEY = "tgp_v1_qgxCBe0k1wqAVamtAz6jvWTjEb7OURkx4wSE79XGicM";
+
+// Hugging Face API configuration
+const HF_API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3-8b-chat-hf";
+const HF_API_KEY = "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";
 
 interface ChatPageProps {
   initialMessages?: Message[];
@@ -31,6 +35,7 @@ const ChatPage: React.FC<ChatPageProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [apiKeyError, setApiKeyError] = useState(false);
   const [customApiKey, setCustomApiKey] = useState("");
+  const [useHuggingFace, setUseHuggingFace] = useState(true); // Default to using Hugging Face
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
@@ -45,50 +50,19 @@ const ChatPage: React.FC<ChatPageProps> = ({
     setIsLoading(true);
 
     try {
-      // Use custom API key if provided, otherwise use the default one
-      const currentApiKey = customApiKey || API_KEY;
+      let aiResponse;
       
-      // Direct API call to Together.ai without going through Supabase
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${currentApiKey}`
-        },
-        body: JSON.stringify({
-          model: "meta-llama/Llama-3-8b-chat-hf",
-          messages: [
-            { role: "system", content: "You are Lucky, a helpful and friendly AI assistant. Respond to users in a conversational, natural way. Keep responses concise but informative." },
-            ...messages.map(msg => ({
-              role: msg.isAI ? "assistant" : "user",
-              content: msg.content
-            })),
-            { role: "user", content }
-          ],
-          temperature: 0.7,
-          max_tokens: 800
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("API Error:", errorData);
-        
-        // Check if it's an invalid API key error
-        if (errorData.error?.code === "invalid_api_key") {
-          setApiKeyError(true);
-          throw new Error("Invalid API key. Please provide a valid API key.");
-        }
-        
-        throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+      if (useHuggingFace) {
+        // Call Hugging Face API
+        aiResponse = await callHuggingFaceAPI(content, messages);
+      } else {
+        // Call Together.ai API as fallback
+        aiResponse = await callTogetherAPI(content, messages);
       }
 
       // Reset API key error if the request was successful
       setApiKeyError(false);
       
-      const data = await response.json();
-      const aiResponse = data.choices[0].message.content;
-
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: aiResponse,
@@ -104,18 +78,130 @@ const ChatPage: React.FC<ChatPageProps> = ({
         variant: "destructive",
       });
       
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: error instanceof Error 
-          ? error.message 
-          : "I apologize, but I encountered an error processing your request. Please try again later.",
-        isAI: true,
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      // If error is due to Hugging Face API, try Together.ai as fallback
+      if (useHuggingFace) {
+        try {
+          setUseHuggingFace(false);
+          const fallbackResponse = await callTogetherAPI(content, messages);
+          
+          const fallbackMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: fallbackResponse,
+            isAI: true,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          setMessages((prev) => [...prev, fallbackMessage]);
+          
+          toast({
+            title: "Switched to Fallback API",
+            description: "Hugging Face API encountered an issue. Using Together.ai as fallback.",
+          });
+        } catch (fallbackError) {
+          const errorMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: fallbackError instanceof Error 
+              ? fallbackError.message 
+              : "I apologize, but I encountered an error processing your request. Please try again later.",
+            isAI: true,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+        }
+      } else {
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: error instanceof Error 
+            ? error.message 
+            : "I apologize, but I encountered an error processing your request. Please try again later.",
+          isAI: true,
+          timestamp: new Date().toLocaleTimeString(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const callHuggingFaceAPI = async (content: string, prevMessages: Message[]): Promise<string> => {
+    const conversation = prevMessages.map(msg => ({
+      role: msg.isAI ? "assistant" : "user",
+      content: msg.content
+    }));
+    
+    const payload = {
+      inputs: {
+        system: "You are Lucky, a helpful and friendly AI assistant. Respond to users in a conversational, natural way. Keep responses concise but informative.",
+        messages: [
+          ...conversation,
+          { role: "user", content }
+        ]
+      },
+      parameters: {
+        temperature: 0.7,
+        max_new_tokens: 800
+      }
+    };
+    
+    const response = await fetch(HF_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${HF_API_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Hugging Face API Error:", errorData);
+      throw new Error(`Hugging Face API error: ${errorData.error || response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.generated_text || "I'm sorry, I couldn't generate a response.";
+  };
+
+  const callTogetherAPI = async (content: string, prevMessages: Message[]): Promise<string> => {
+    // Use custom API key if provided, otherwise use the default one
+    const currentApiKey = customApiKey || TOGETHER_API_KEY;
+    
+    const response = await fetch(TOGETHER_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${currentApiKey}`
+      },
+      body: JSON.stringify({
+        model: "meta-llama/Llama-3-8b-chat-hf",
+        messages: [
+          { role: "system", content: "You are Lucky, a helpful and friendly AI assistant. Respond to users in a conversational, natural way. Keep responses concise but informative." },
+          ...prevMessages.map(msg => ({
+            role: msg.isAI ? "assistant" : "user",
+            content: msg.content
+          })),
+          { role: "user", content }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Together.ai API Error:", errorData);
+      
+      // Check if it's an invalid API key error
+      if (errorData.error?.code === "invalid_api_key") {
+        setApiKeyError(true);
+        throw new Error("Invalid API key. Please provide a valid API key.");
+      }
+      
+      throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.choices[0].message.content;
   };
 
   const handleApiKeySubmit = (e: React.FormEvent) => {

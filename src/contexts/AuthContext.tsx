@@ -104,10 +104,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
+      // Add scopes for additional permissions if needed
+      provider.addScope('profile');
+      provider.addScope('email');
+      
       const result = await signInWithPopup(auth, provider);
       await createUserDocument(result.user);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing in with Google:", error);
+      // Handle specific errors
+      if (error.code === 'auth/popup-closed-by-user') {
+        console.log("Popup closed by user");
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        console.log("Multiple popup requests");
+      }
       throw error;
     }
   };
@@ -116,10 +126,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGithub = async () => {
     try {
       const provider = new GithubAuthProvider();
+      // Add scopes for additional permissions if needed
+      provider.addScope('user');
+      
       const result = await signInWithPopup(auth, provider);
       await createUserDocument(result.user);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing in with GitHub:", error);
+      // Handle specific errors
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        console.log("Account exists with different credentials");
+        // You could handle this by suggesting the user try another sign-in method
+      }
       throw error;
     }
   };
