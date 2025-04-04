@@ -7,7 +7,6 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import ChatSuggestions from "@/components/ChatSuggestions";
 
 // API URL and key configuration
 const TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions";
@@ -257,10 +256,21 @@ const ChatPage: React.FC<ChatPageProps> = ({
       </div>
       <div className="border-t border-slate-200/60 dark:border-slate-700/60">
         {showSuggestions && (
-          <ChatSuggestions 
-            suggestions={CHAT_SUGGESTIONS} 
-            onSuggestionClick={handleSuggestionClick} 
-          />
+          <div className="p-4 pb-0">
+            <div className="flex flex-wrap gap-2">
+              {CHAT_SUGGESTIONS.map((suggestion, index) => (
+                <Button
+                  key={index}
+                  variant="secondary"
+                  size="sm"
+                  className="text-xs py-1 px-3 h-auto rounded-full bg-secondary/40 hover:bg-secondary/60 transition-colors text-secondary-foreground"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+          </div>
         )}
         <ChatInput onSubmit={handleSendMessage} disabled={isLoading} />
       </div>

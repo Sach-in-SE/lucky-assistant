@@ -3,7 +3,6 @@ import { useState, useRef, FormEvent, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { Mic, MicOff, Send } from "lucide-react";
-import ChatSuggestions from "./ChatSuggestions";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChatInputProps {
@@ -15,11 +14,6 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
   const [isListening, setIsListening] = useState(false);
-  const [suggestions, setSuggestions] = useState([
-    "Tell me a fun fact about AI",
-    "How can AI help with productivity?",
-    "Explain machine learning in simple terms"
-  ]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
@@ -94,46 +88,10 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
 
     onSubmit(message);
     setMessage("");
-    // Generate new suggestions after each message sent
-    generateNewSuggestions();
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    setMessage(suggestion);
-    textareaRef.current?.focus();
-  };
-
-  // Generate new contextual suggestions (in a real app, these would be more dynamic)
-  const generateNewSuggestions = () => {
-    const suggestionSets = [
-      [
-        "What are the latest AI trends?",
-        "How is AI changing healthcare?",
-        "Can you explain neural networks?"
-      ],
-      [
-        "Write a short poem about technology",
-        "Give me tips for learning programming",
-        "What's the future of AI?"
-      ],
-      [
-        "How does natural language processing work?",
-        "Tell me about AI ethics",
-        "What are some AI project ideas for beginners?"
-      ]
-    ];
-    
-    const randomIndex = Math.floor(Math.random() * suggestionSets.length);
-    setSuggestions(suggestionSets[randomIndex]);
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 p-4">
-      <ChatSuggestions 
-        suggestions={suggestions} 
-        onSuggestionClick={handleSuggestionClick} 
-      />
-      
       <div className="flex gap-2">
         <Textarea
           ref={textareaRef}
