@@ -16,53 +16,26 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  // Initialize speech recognition
+  // Cleanup function to stop recording and release resources
   useEffect(() => {
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
-      
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setMessage((prev) => prev + ' ' + transcript.trim());
-        setIsListening(false);
-      };
-      
-      recognitionRef.current.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
-        toast({
-          title: "Speech Recognition Error",
-          description: `Error: ${event.error}. Please try again.`,
-          variant: "destructive",
-        });
-        setIsListening(false);
-      };
-      
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
-    
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
       stopRecording();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
     };
-  }, [toast]);
+  }, []);
 
   const startRecording = async () => {
     try {
       audioChunksRef.current = [];
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -74,15 +47,18 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
       };
       
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await transcribeAudio(audioBlob);
-        
-        // Stop all tracks on the stream to release the microphone
-        stream.getTracks().forEach(track => track.stop());
+        await processAudioData();
       };
       
       mediaRecorder.start();
       setIsListening(true);
+      
+      // Optional: Auto-stop after 10 seconds
+      setTimeout(() => {
+        if (isListening && mediaRecorderRef.current) {
+          stopRecording();
+        }
+      }, 10000);
     } catch (error) {
       console.error('Error starting recording:', error);
       toast({
@@ -94,44 +70,92 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isListening) {
-      setIsProcessing(true); // Set processing state to show user that transcription is happening
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
       setIsListening(false);
     }
+    
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
   };
 
-  const transcribeAudio = async (audioBlob: Blob) => {
+  const processAudioData = async () => {
+    if (audioChunksRef.current.length === 0) return;
+    
     try {
-      const formData = new FormData();
-      formData.append("model", "openai/whisper-base");
-      formData.append("file", audioBlob, "recording.webm");
+      setIsProcessing(true);
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      
+      // Convert blob to base64
+      const base64Audio = await convertBlobToBase64(audioBlob);
+      const audioData = base64Audio.split(',')[1]; // Remove the data URL prefix
+      
+      await transcribeAudio(audioData);
+    } catch (error) {
+      console.error('Error processing audio:', error);
+      // Silently fail without showing error to user as requested
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
+  const convertBlobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const transcribeAudio = async (base64Audio: string) => {
+    try {
+      // Create FormData for the API request
+      const formData = new FormData();
+      
+      // Convert base64 back to a file/blob
+      const byteCharacters = atob(base64Audio);
+      const byteNumbers = new Array(byteCharacters.length);
+      
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      
+      const byteArray = new Uint8Array(byteNumbers);
+      const audioBlob = new Blob([byteArray], { type: 'audio/webm' });
+      
+      // Append the audio file to the FormData
+      formData.append("file", audioBlob, "recording.webm");
+      
+      // Send the request to the Hugging Face API
       const response = await fetch("https://api-inference.huggingface.co/models/openai/whisper-base", {
         method: "POST",
         headers: {
-          Authorization: "Bearer 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",
+          "Authorization": "Bearer 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",
         },
         body: formData,
       });
-
+      
       if (!response.ok) {
         console.error("Transcription failed:", response.statusText);
-        // Silently fail and don't show error to user as requested
-        setIsProcessing(false);
         return;
       }
-
+      
       const result = await response.json();
       
       if (result.text) {
         setMessage(prev => (prev.trim() ? `${prev.trim()} ${result.text.trim()}` : result.text.trim()));
+        
+        // Focus the textarea
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+        }
       }
     } catch (error) {
       console.error("Error transcribing audio:", error);
-      // Silently fail and don't show error to user as requested
-    } finally {
-      setIsProcessing(false);
+      // Silently fail as requested
     }
   };
 
