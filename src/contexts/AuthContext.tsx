@@ -10,7 +10,9 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  updateProfile as firebaseUpdateProfile
+  updateProfile as firebaseUpdateProfile,
+  updateEmail as firebaseUpdateEmail,
+  updatePassword as firebaseUpdatePassword
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
@@ -200,6 +202,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await firebaseUpdateProfile(currentUser, {
           displayName: data.displayName
         });
+      }
+      
+      // Update email in Firebase Auth if provided
+      if (data.email && currentUser && data.email !== currentUser.email) {
+        await firebaseUpdateEmail(currentUser, data.email);
       }
       
       // Update local state

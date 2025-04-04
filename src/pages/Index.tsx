@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import Header from "@/components/Header";
 import ChatPage from "@/components/ChatPage";
@@ -38,24 +37,21 @@ const Index = () => {
   };
 
   return (
-    <ThemeProvider>
-      <TooltipProvider>
-        <div className="flex flex-col h-screen">
-          <Background />
-          
-          <Header 
-            showContact={showContact} 
-            setShowContact={setShowContact}
-            onNewChat={handleNewChat}
-          />
+    <TooltipProvider>
+      <div className="flex flex-col h-screen">
+        <Background />
+        
+        <Header 
+          showContact={showContact} 
+          setShowContact={setShowContact}
+          onNewChat={handleNewChat}
+        />
 
-          <main className="flex-1 overflow-y-auto container max-w-4xl mx-auto p-4 chat-container">
-            {showContact ? <ContactPage /> : <ChatPage key={chatKey} />}
-          </main>
-        </div>
-        <Toaster />
-      </TooltipProvider>
-    </ThemeProvider>
+        <main className="flex-1 overflow-y-auto container max-w-4xl mx-auto p-4 chat-container">
+          {showContact ? <ContactPage /> : <ChatPage key={chatKey} />}
+        </main>
+      </div>
+    </TooltipProvider>
   );
 }
 
