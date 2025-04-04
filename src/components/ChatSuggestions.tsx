@@ -1,6 +1,4 @@
 
-// This file is now empty as we've moved the suggestions directly to the ChatPage component
-// The file is kept to prevent any import errors, but it's no longer used
 import React from "react";
 
 interface ChatSuggestionsProps {
@@ -8,6 +6,7 @@ interface ChatSuggestionsProps {
   onSuggestionClick: (suggestion: string) => void;
 }
 
+// This component is no longer used as the suggestions are implemented directly in ChatPage
 const ChatSuggestions: React.FC<ChatSuggestionsProps> = () => {
   return null;
 };
