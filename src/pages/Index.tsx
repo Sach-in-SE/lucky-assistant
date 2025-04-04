@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import ChatPage from "@/components/ChatPage";
 import ContactPage from "@/components/ContactPage";
 import { useLocation } from "react-router-dom";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Create a dark-only Background component
 const Background = () => {
@@ -38,20 +39,22 @@ const Index = () => {
 
   return (
     <ThemeProvider>
-      <div className="flex flex-col h-screen">
-        <Background />
-        
-        <Header 
-          showContact={showContact} 
-          setShowContact={setShowContact}
-          onNewChat={handleNewChat}
-        />
+      <TooltipProvider>
+        <div className="flex flex-col h-screen">
+          <Background />
+          
+          <Header 
+            showContact={showContact} 
+            setShowContact={setShowContact}
+            onNewChat={handleNewChat}
+          />
 
-        <main className="flex-1 overflow-y-auto container max-w-4xl mx-auto p-4 chat-container">
-          {showContact ? <ContactPage /> : <ChatPage key={chatKey} />}
-        </main>
-      </div>
-      <Toaster />
+          <main className="flex-1 overflow-y-auto container max-w-4xl mx-auto p-4 chat-container">
+            {showContact ? <ContactPage /> : <ChatPage key={chatKey} />}
+          </main>
+        </div>
+        <Toaster />
+      </TooltipProvider>
     </ThemeProvider>
   );
 }
